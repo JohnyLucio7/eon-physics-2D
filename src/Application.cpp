@@ -61,8 +61,7 @@ void Application::Update()
     particle->acceleration.y = 9.8 * PIXELS_PER_METER;
 
     // Integrate the acceleration and velocity to estimate the new position
-    particle->velocity += particle->acceleration * deltaTime;
-    particle->position += particle->velocity * deltaTime;
+    particle->Integrate(deltaTime);
 
     // Nasty hardcoded flip in velocity if it touches the limits of the screen window
     if (particle->position.x - particle->radius <= 0)
