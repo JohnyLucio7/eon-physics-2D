@@ -13,8 +13,13 @@ void Application::Setup()
 {
     running = Graphics::OpenWindow();
 
-    particle = new Particle(50, 100, 1.0);
-    particle->radius = 4;
+    Particle* smallBall = new Particle(50, 100, 1.0);
+    smallBall->radius = 4;
+    particles.push_back(smallBall);
+
+    Particle* bigBall = new Particle(200, 100, 3.0);
+    bigBall->radius = 12;
+    particles.push_back(bigBall);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -56,33 +61,49 @@ void Application::Update()
     // Set the time of the current frame to be used in the next one
     timePreviousFrame = SDL_GetTicks();
 
-    // Apply a "wind" force to my particle
-    Vec2 wind = Vec2(0.2 * PIXELS_PER_METER, 0.0);
-    particle->AddForce(wind);
+    // Apply a "wind" force to my particles
+    for (auto particle : particles)
+    {
+        Vec2 wind = Vec2(0.2 * PIXELS_PER_METER, 0.0);
+        particle->AddForce(wind);
+    }
 
-    // Integrate the acceleration and velocity to estimate the new position
-    particle->Integrate(deltaTime);
+    // Apply a "weight" force to my particles
+    for (auto particle : particles)
+    {
+        Vec2 weight = Vec2(0.0, particle->mass * 9.8 * PIXELS_PER_METER);
+        particle->AddForce(weight);
+    }
 
-    // Nasty hardcoded flip in velocity if it touches the limits of the screen window
-    if (particle->position.x - particle->radius <= 0)
+    for (auto particle : particles)
     {
-        particle->position.x = particle->radius;
-        particle->velocity.x *= -0.9;
+        // Integrate the acceleration and velocity to estimate the new position
+        particle->Integrate(deltaTime);
     }
-    else if (particle->position.x + particle->radius >= Graphics::Width())
+
+    for (auto particle : particles)
     {
-        particle->position.x = Graphics::Width() - particle->radius;
-        particle->velocity.x *= -0.9;
-    }
-    if (particle->position.y - particle->radius <= 0)
-    {
-        particle->position.y = particle->radius;
-        particle->velocity.y *= -0.9;
-    }
-    else if (particle->position.y + particle->radius >= Graphics::Height())
-    {
-        particle->position.y = Graphics::Height() - particle->radius;
-        particle->velocity.y *= -0.9;
+        // Nasty hardcoded flip in velocity if it touches the limits of the screen window
+        if (particle->position.x - particle->radius <= 0)
+        {
+            particle->position.x = particle->radius;
+            particle->velocity.x *= -0.9;
+        }
+        else if (particle->position.x + particle->radius >= Graphics::Width())
+        {
+            particle->position.x = Graphics::Width() - particle->radius;
+            particle->velocity.x *= -0.9;
+        }
+        if (particle->position.y - particle->radius <= 0)
+        {
+            particle->position.y = particle->radius;
+            particle->velocity.y *= -0.9;
+        }
+        else if (particle->position.y + particle->radius >= Graphics::Height())
+        {
+            particle->position.y = Graphics::Height() - particle->radius;
+            particle->velocity.y *= -0.9;
+        }
     }
 }
 
@@ -92,7 +113,10 @@ void Application::Update()
 void Application::Render()
 {
     Graphics::ClearScreen(0xFF056263);
-    Graphics::DrawFillCircle(particle->position.x, particle->position.y, particle->radius, 0xFFFFFFFF);
+    for (auto particle : particles)
+    {
+        Graphics::DrawFillCircle(particle->position.x, particle->position.y, particle->radius, 0xFFFFFFFF);
+    }
     Graphics::RenderFrame();
 }
 
@@ -101,6 +125,9 @@ void Application::Render()
 ///////////////////////////////////////////////////////////////////////////////
 void Application::Destroy()
 {
-    delete particle;
+    for (auto particle : particles)
+    {
+        delete particle;
+    }
     Graphics::CloseWindow();
 }
