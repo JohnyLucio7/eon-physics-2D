@@ -85,9 +85,9 @@ void Application::Update()
     }
 
     // Check all the rigidbodies with the other rigidbodies for collision
-    for (size_t i = 0; i <= bodies.size() - 1; i++)
+    for (int i = 0; i <= bodies.size() - 1; i++)
     {
-        for (size_t j = i + 1; j < bodies.size(); j++)
+        for (int j = i + 1; j < bodies.size(); j++)
         {
             Body* a = bodies[i];
             Body* b = bodies[j];
