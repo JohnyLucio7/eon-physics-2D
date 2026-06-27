@@ -14,11 +14,9 @@ void Application::Setup()
 {
     running = Graphics::OpenWindow();
 
-    anchor = Vec2(Graphics::Width() / 2.0, 30);
-
-    Particle* bob = new Particle(Graphics::Width() / 2.0, Graphics::Height() / 2.0, 2.0);
-    bob->radius = 10;
-    particles.push_back(bob);
+    Body* body = new Body(Graphics::Width() / 2.0, Graphics::Height() / 2.0, 1.0);
+    body->radius = 4;
+    bodies.push_back(body);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -37,47 +35,11 @@ void Application::Input()
         case SDL_KEYDOWN:
             if (event.key.keysym.sym == SDLK_ESCAPE)
                 running = false;
-            if (event.key.keysym.sym == SDLK_UP)
-                pushForce.y = -50 * PIXELS_PER_METER;
-            if (event.key.keysym.sym == SDLK_RIGHT)
-                pushForce.x = 50 * PIXELS_PER_METER;
-            if (event.key.keysym.sym == SDLK_DOWN)
-                pushForce.y = 50 * PIXELS_PER_METER;
-            if (event.key.keysym.sym == SDLK_LEFT)
-                pushForce.x = -50 * PIXELS_PER_METER;
-            break;
-        case SDL_KEYUP:
-            if (event.key.keysym.sym == SDLK_UP)
-                pushForce.y = 0;
-            if (event.key.keysym.sym == SDLK_RIGHT)
-                pushForce.x = 0;
-            if (event.key.keysym.sym == SDLK_DOWN)
-                pushForce.y = 0;
-            if (event.key.keysym.sym == SDLK_LEFT)
-                pushForce.x = 0;
-            break;
-        case SDL_MOUSEMOTION:
-            mouseCursor.x = event.motion.x;
-            mouseCursor.y = event.motion.y;
             break;
         case SDL_MOUSEBUTTONDOWN:
-            if (!leftMouseButtonDown && event.button.button == SDL_BUTTON_LEFT)
-            {
-                leftMouseButtonDown = true;
-                int x, y;
-                SDL_GetMouseState(&x, &y);
-                mouseCursor.x = x;
-                mouseCursor.y = y;
-            }
-            break;
-        case SDL_MOUSEBUTTONUP:
-            if (leftMouseButtonDown && event.button.button == SDL_BUTTON_LEFT)
-            {
-                leftMouseButtonDown = false;
-                Vec2 impulseDirection = (particles[0]->position - mouseCursor).UnitVector();
-                float impulseMagnitude = (particles[0]->position - mouseCursor).Magnitude() * 5.0;
-                particles[0]->velocity = impulseDirection * impulseMagnitude;
-            }
+            int x, y;
+            SDL_GetMouseState(&x, &y);
+            // ...
             break;
         }
     }
@@ -102,53 +64,42 @@ void Application::Update()
     // Set the time of the current frame to be used in the next one
     timePreviousFrame = SDL_GetTicks();
 
-    // Apply forces to the particles
-    for (auto particle : particles)
+    // Apply forces to the bodies
+    for (auto body : bodies)
     {
-        particle->AddForce(pushForce);
-
-        // Apply a drag force
-        Vec2 drag = Force::GenerateDragForce(*particle, 0.001);
-        particle->AddForce(drag);
-
-        // Apply weight force
-        Vec2 weight = Vec2(0.0, particle->mass * 9.8 * PIXELS_PER_METER);
-        particle->AddForce(weight);
+        // Apply the weight force
+        Vec2 weight = Vec2(0.0, body->mass * 9.8 * PIXELS_PER_METER);
+        body->AddForce(weight);
     }
-
-    // Apply a spring force to the particle connected to the anchor
-    Vec2 springForce = Force::GenerateSpringForce(*particles[0], anchor, restLength, k);
-    particles[0]->AddForce(springForce);
 
     // Integrate the acceleration and velocity to estimate the new position
-    for (auto particle : particles)
+    for (auto body : bodies)
     {
-        particle->Integrate(deltaTime);
+        body->Integrate(deltaTime);
     }
 
-    // Check the boundaries of the window
-    for (auto particle : particles)
+    // Check the boundaries of the window applying a hardcoded bounce flip in velocity
+    for (auto body : bodies)
     {
-        // Nasty hardcoded flip in velocity if it touches the limits of the screen window
-        if (particle->position.x - particle->radius <= 0)
+        if (body->position.x - body->radius <= 0)
         {
-            particle->position.x = particle->radius;
-            particle->velocity.x *= -0.9;
+            body->position.x = body->radius;
+            body->velocity.x *= -0.9;
         }
-        else if (particle->position.x + particle->radius >= Graphics::Width())
+        else if (body->position.x + body->radius >= Graphics::Width())
         {
-            particle->position.x = Graphics::Width() - particle->radius;
-            particle->velocity.x *= -0.9;
+            body->position.x = Graphics::Width() - body->radius;
+            body->velocity.x *= -0.9;
         }
-        if (particle->position.y - particle->radius <= 0)
+        if (body->position.y - body->radius <= 0)
         {
-            particle->position.y = particle->radius;
-            particle->velocity.y *= -0.9;
+            body->position.y = body->radius;
+            body->velocity.y *= -0.9;
         }
-        else if (particle->position.y + particle->radius >= Graphics::Height())
+        else if (body->position.y + body->radius >= Graphics::Height())
         {
-            particle->position.y = Graphics::Height() - particle->radius;
-            particle->velocity.y *= -0.9;
+            body->position.y = Graphics::Height() - body->radius;
+            body->velocity.y *= -0.9;
         }
     }
 }
@@ -160,20 +111,11 @@ void Application::Render()
 {
     Graphics::ClearScreen(0xFF0F0721);
 
-    if (leftMouseButtonDown)
+    // Draw all bodies
+    for (auto body : bodies)
     {
-        Graphics::DrawLine(particles[0]->position.x, particles[0]->position.y, mouseCursor.x, mouseCursor.y,
-                           0xFF0000FF);
+        Graphics::DrawFillCircle(body->position.x, body->position.y, body->radius, 0xFFFFFFFF);
     }
-
-    // Draw the spring
-    Graphics::DrawLine(anchor.x, anchor.y, particles[0]->position.x, particles[0]->position.y, 0xFF313131);
-
-    // Draw the anchor
-    Graphics::DrawFillCircle(anchor.x, anchor.y, 5, 0xFF001155);
-
-    // Draw the bob
-    Graphics::DrawFillCircle(particles[0]->position.x, particles[0]->position.y, particles[0]->radius, 0xFFFFFFFF);
 
     Graphics::RenderFrame();
 }
@@ -183,9 +125,9 @@ void Application::Render()
 ///////////////////////////////////////////////////////////////////////////////
 void Application::Destroy()
 {
-    for (auto particle : particles)
+    for (auto body : bodies)
     {
-        delete particle;
+        delete body;
     }
     Graphics::CloseWindow();
 }
