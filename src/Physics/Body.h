@@ -1,11 +1,11 @@
 #ifndef BODY_H
 #define BODY_H
 
+#include <cstddef>
 #include "Vec2.h"
+#include "Shape.h"
 
 struct Body {
-    int radius;
-
     Vec2 position;
     Vec2 velocity;
     Vec2 acceleration;
@@ -15,7 +15,9 @@ struct Body {
     float mass;
     float invMass;
 
-    Body(float x, float y, float mass);
+    Shape* shape = NULL;
+
+    Body(const Shape& shape, float x, float y, float mass);
     ~Body();
 
     void AddForce(const Vec2& force);
