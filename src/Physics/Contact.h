@@ -4,7 +4,8 @@
 #include "Vec2.h"
 #include "Body.h"
 
-struct Contact {
+struct Contact
+{
     Body* a;
     Body* b;
 
@@ -18,6 +19,7 @@ struct Contact {
     ~Contact() = default;
 
     void ResolvePenetration();
+    void ResolveCollision();
 };
 
 #endif

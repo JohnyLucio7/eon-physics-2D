@@ -4,7 +4,8 @@
 #include "Vec2.h"
 #include "Shape.h"
 
-struct Body {
+struct Body
+{
     bool isColliding = false;
 
     // Linear motion
@@ -27,6 +28,9 @@ struct Body {
     float I;
     float invI;
 
+    // Coefficient of restitution (elasticity)
+    float restitution;
+
     // Pointer to the shape/geometry of this rigid body
     Shape* shape = nullptr;
 
@@ -39,6 +43,8 @@ struct Body {
     void AddTorque(float torque);
     void ClearForces();
     void ClearTorque();
+
+    void ApplyImpulse(const Vec2& j);
 
     void IntegrateLinear(float dt);
     void IntegrateAngular(float dt);
