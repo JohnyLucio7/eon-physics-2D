@@ -47,7 +47,7 @@ float PolygonShape::GetMomentOfInertia() const {
 
 void PolygonShape::UpdateVertices(float angle, const Vec2& position) {
     // Loop all the vertices, transforming from local to world space
-    for (size_t i = 0; i < localVertices.size(); i++) {
+    for (int i = 0; i < localVertices.size(); i++) {
         // First rotate, then we translate
         worldVertices[i] = localVertices[i].Rotate(angle);
         worldVertices[i] += position;
