@@ -21,7 +21,7 @@ void Application::Setup()
     Body* leftWall = new Body(BoxShape(50, Graphics::Height() - 100), 50, Graphics::Height() / 2.0 - 25, 0.0);
     Body* rightWall = new Body(BoxShape(50, Graphics::Height() - 100), Graphics::Width() - 50,
                                Graphics::Height() / 2.0 - 25, 0.0);
-    floor->restitution = 0.2;
+    floor->restitution = 0.5;
     leftWall->restitution = 0.2;
     rightWall->restitution = 0.2;
     // bodies.push_back(floor);
