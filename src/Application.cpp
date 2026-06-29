@@ -24,15 +24,20 @@ void Application::Setup()
     floor->restitution = 0.2;
     leftWall->restitution = 0.2;
     rightWall->restitution = 0.2;
-    bodies.push_back(floor);
-    bodies.push_back(leftWall);
-    bodies.push_back(rightWall);
+    // bodies.push_back(floor);
+    // bodies.push_back(leftWall);
+    // bodies.push_back(rightWall);
 
-    // Add a static box so other boxes can collide
+    // Add a static box so other objects can collide
     Body* bigBox = new Body(BoxShape(200, 200), Graphics::Width() / 2.0, Graphics::Height() / 2.0, 0.0);
     bigBox->restitution = 0.1;
     bigBox->rotation = 1.4;
     bodies.push_back(bigBox);
+
+    // Add a circle that we can move with the mouse
+    Body* ball = new Body(CircleShape(50), Graphics::Width() / 2.0, Graphics::Height() / 2.0, 1.0);
+    ball->restitution = 0.1;
+    bodies.push_back(ball);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -52,12 +57,11 @@ void Application::Input()
             if (event.key.keysym.sym == SDLK_ESCAPE)
                 running = false;
             break;
-        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEMOTION:
             int x, y;
             SDL_GetMouseState(&x, &y);
-            Body* box = new Body(BoxShape(50, 50), x, y, 1.0);
-            box->restitution = 0.2;
-            bodies.push_back(box);
+            bodies[1]->position.x = x;
+            bodies[1]->position.y = y;
             break;
         }
     }
@@ -84,13 +88,12 @@ void Application::Update()
     // Set the time of the current frame to be used in the next one
     timePreviousFrame = SDL_GetTicks();
 
-    // Apply forces to the bodies
-    for (auto body : bodies)
-    {
-        // Apply the weight force
-        Vec2 weight = Vec2(0.0, body->mass * 9.8 * PIXELS_PER_METER);
-        body->AddForce(weight);
-    }
+    // // Apply forces to the bodies
+    // for (auto body: bodies) {
+    //     // Apply the weight force
+    //     Vec2 weight = Vec2(0.0, body->mass * 9.8 * PIXELS_PER_METER);
+    //     body->AddForce(weight);
+    // }
 
     // Integrate the acceleration and velocity to estimate the new position
     for (auto body : bodies)
@@ -112,7 +115,7 @@ void Application::Update()
             if (CollisionDetection::IsColliding(a, b, contact))
             {
                 // Resolve the collision using the impulse method
-                contact.ResolveCollision();
+                // contact.ResolveCollision();
 
                 // Draw debug contact information
                 Graphics::DrawFillCircle(contact.start.x, contact.start.y, 3, 0xFFFF00FF);

@@ -1,4 +1,5 @@
 #include "CollisionDetection.h"
+#include "../Graphics.h"
 #include <limits>
 
 bool CollisionDetection::IsColliding(Body* a, Body* b, Contact& contact)
@@ -15,6 +16,14 @@ bool CollisionDetection::IsColliding(Body* a, Body* b, Contact& contact)
     if (aIsPolygon && bIsPolygon)
     {
         return IsCollidingPolygonPolygon(a, b, contact);
+    }
+    if (aIsPolygon && bIsCircle)
+    {
+        return IsCollidingPolygonCircle(a, b, contact);
+    }
+    if (aIsCircle && bIsPolygon)
+    {
+        return IsCollidingPolygonCircle(b, a, contact);
     }
     return false;
 }
@@ -81,4 +90,40 @@ bool CollisionDetection::IsCollidingPolygonPolygon(Body* a, Body* b, Contact& co
         contact.end = bPoint;
     }
     return true;
+}
+
+bool CollisionDetection::IsCollidingPolygonCircle(Body* polygon, Body* circle, Contact& contact)
+{
+    const PolygonShape* polygonShape = (PolygonShape*)polygon->shape;
+    const std::vector<Vec2>& polygonVertices = polygonShape->worldVertices;
+
+    Vec2 minCurrVertex;
+    Vec2 minNextVertex;
+
+    // Loop all the edges of the polygon/box finding the nearest edge to the circle center
+    for (int i = 0; i < polygonVertices.size(); i++)
+    {
+        int currIndex = i;
+        int nextIndex = (i + 1) % polygonVertices.size();
+        Vec2 edge = polygonShape->EdgeAt(currIndex);
+        Vec2 normal = edge.Normal();
+
+        // Compare the circle center with the rectangle vertex
+        Vec2 circleCenter = circle->position - polygonVertices[currIndex];
+
+        // Project the circle center onto the edge normal
+        float projection = circleCenter.Dot(normal);
+
+        // If we found a dot product projection that is in the positive side of the normal
+        if (projection > 0)
+        {
+            // Store the start and end vertices of the nearest edge
+            minCurrVertex = polygonVertices[currIndex];
+            minNextVertex = polygonVertices[nextIndex];
+            break;
+        }
+    }
+    Graphics::DrawFillCircle(minCurrVertex.x, minCurrVertex.y, 5, 0xFF00FFFF);
+    Graphics::DrawFillCircle(minNextVertex.x, minNextVertex.y, 5, 0xFF00FFFF);
+    return false;
 }
